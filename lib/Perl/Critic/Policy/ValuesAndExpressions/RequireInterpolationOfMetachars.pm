@@ -93,6 +93,29 @@ sub _needs_interpolation {
 
 #-----------------------------------------------------------------------------
 
+# Stolen from Email::Address, which is deprecated.
+my $CTL            = q{\x00-\x1F\x7F};
+my $special        = q{()<>\\[\\]:;@\\\\,."};
+my $text           = qr/[^\x0A\x0D]/;
+my $quoted_pair    = qr/\\$text/;
+my $ctext          = qr/(?>[^()\\]+)/;
+my $ccontent       = qr/$ctext|$quoted_pair/;
+my $comment        = qr/\s*\((?:\s*$ccontent)*\s*\)\s*/;
+my $cfws           = qr/$comment|\s+/;
+my $atext          = qq/[^$CTL$special\\s]/;
+my $atom           = qr/$cfws*$atext+$cfws*/;
+my $dot_atom_text  = qr/$atext+(?:\.$atext+)*/;
+my $dot_atom       = qr/$cfws*$dot_atom_text$cfws*/;
+my $qtext          = qr/[^\\"]/;
+my $qcontent       = qr/$qtext|$quoted_pair/;
+my $quoted_string  = qr/$cfws*"$qcontent*"$cfws*/;
+my $local_part     = qr/$dot_atom|$quoted_string/;
+my $dtext          = qr/[^\[\]\\]/;
+my $dcontent       = qr/$dtext|$quoted_pair/;
+my $domain_literal = qr/$cfws*\[(?:\s*$dcontent)*\s*\]$cfws*/;
+my $domain         = qr/$dot_atom|$domain_literal/;
+our $addr_spec     = qr/$local_part\@$domain/;
+
 sub _looks_like_email_address {
     my ($string) = @_;
 
